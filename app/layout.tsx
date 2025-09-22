@@ -7,8 +7,9 @@ import { Suspense } from "react"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "GitHub Issue Board Viewer",
-  description: "Browse and filter issues from any public GitHub repository",
+  title: "OpenSource Board - Discover Your Next Open Source Contribution",
+  description:
+    "Find beginner-friendly issues across curated open source projects. Start contributing to the projects you love with issues tagged as 'good first issue' and 'help wanted'.",
   generator: "narendra3003",
 }
 

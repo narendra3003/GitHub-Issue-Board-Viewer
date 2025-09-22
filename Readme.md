@@ -39,25 +39,21 @@ A comprehensive React.js application for browsing and filtering issues from any 
 ### Using Filters
 
 #### State Filter
-
 - **All**: Show both open and closed issues
 - **Open**: Show only open issues
 - **Closed**: Show only closed issues
 
 #### Label Filter
-
 - Select multiple labels to filter issues
 - Issues matching ANY selected label will be shown
 - Labels are dynamically populated from the repository
 
 #### Assignee Filter
-
 - Filter by GitHub username of the assignee
 - Supports partial matching (case-insensitive)
 - Only shows issues with assignees
 
 #### Keyword Search
-
 - Search in issue titles and creator usernames
 - Case-insensitive matching
 - Real-time filtering as you type
@@ -65,7 +61,6 @@ A comprehensive React.js application for browsing and filtering issues from any 
 ### Understanding Issue Cards
 
 Each issue card displays:
-
 - **Status Icon**: Green dot (open) or purple checkmark (closed)
 - **Issue Number**: GitHub issue number with # prefix
 - **Title**: Full issue title with text balancing
@@ -93,34 +88,31 @@ Each issue card displays:
 
 \`\`\`
 ├── app/
-│ ├── layout.tsx # Root layout with fonts and global styles
-│ ├── page.tsx # Main application component
-│ └── globals.css # Global styles and design tokens
+│   ├── layout.tsx          # Root layout with fonts and global styles
+│   ├── page.tsx            # Main application component
+│   └── globals.css         # Global styles and design tokens
 ├── components/
-│ ├── ui/ # shadcn/ui components
-│ ├── repo-search.tsx # Repository search component
-│ ├── issue-card.tsx # Individual issue card component
-│ ├── filters.tsx # Filtering and sorting controls
-│ └── loader.tsx # Loading spinner component
-└── README.md # This documentation
+│   ├── ui/                 # shadcn/ui components
+│   ├── repo-search.tsx     # Repository search component
+│   ├── issue-card.tsx      # Individual issue card component
+│   ├── filters.tsx         # Filtering and sorting controls
+│   └── loader.tsx          # Loading spinner component
+└── README.md               # This documentation
 \`\`\`
 
 ### Key Design Patterns
 
 #### State Management
-
 - **Local State**: Uses React hooks for component state
 - **Derived State**: Filtered issues computed from filters and sort state
 - **Effect Dependencies**: Proper dependency arrays for useEffect hooks
 
 #### Error Handling
-
 - **API Errors**: Comprehensive error catching with user-friendly messages
 - **Validation**: Input validation for repository format
 - **Fallbacks**: Graceful degradation for missing data
 
 #### Performance Optimizations
-
 - **Memoization**: Efficient filtering and sorting with proper dependencies
 - **Lazy Loading**: Components loaded only when needed
 - **Debouncing**: Could be added for search input (not currently implemented)
@@ -143,51 +135,48 @@ GitHubIssueBoardViewer (app/page.tsx)
 
 \`\`\`mermaid
 graph TD
-A[User Input] --> B[RepoSearch Component]
-B --> C[fetchIssues Function]
-C --> D[GitHub API Call]
-D --> E[Update Issues State]
-E --> F[Apply Filters useEffect]
-F --> G[Update Filtered Issues]
-G --> H[Render Issue Cards]
+    A[User Input] --> B[RepoSearch Component]
+    B --> C[fetchIssues Function]
+    C --> D[GitHub API Call]
+    D --> E[Update Issues State]
+    E --> F[Apply Filters useEffect]
+    F --> G[Update Filtered Issues]
+    G --> H[Render Issue Cards]
 \`\`\`
 
 ### Data Models
 
 #### Issue Interface
-
 \`\`\`typescript
 interface Issue {
-id: number // Unique GitHub issue ID
-number: number // Issue number in repository
-title: string // Issue title
-state: "open" | "closed" // Current issue state
-labels: Label[] // Array of issue labels
-assignee: User | null // Assigned user (optional)
-created_at: string // ISO date string
-comments: number // Comment count
-html_url: string // GitHub URL
-user: User // Issue creator
+  id: number                    // Unique GitHub issue ID
+  number: number               // Issue number in repository
+  title: string                // Issue title
+  state: "open" | "closed"     // Current issue state
+  labels: Label[]              // Array of issue labels
+  assignee: User | null        // Assigned user (optional)
+  created_at: string           // ISO date string
+  comments: number             // Comment count
+  html_url: string            // GitHub URL
+  user: User                   // Issue creator
 }
 \`\`\`
 
 #### Filter State Interface
-
 \`\`\`typescript
 interface FilterState {
-state: "all" | "open" | "closed" // Issue state filter
-labels: string[] // Selected label names
-assignee: string // Assignee username filter
-keyword: string // Search keyword
+  state: "all" | "open" | "closed"  // Issue state filter
+  labels: string[]                  // Selected label names
+  assignee: string                  // Assignee username filter
+  keyword: string                   // Search keyword
 }
 \`\`\`
 
 #### Sort State Interface
-
 \`\`\`typescript
 interface SortState {
-field: "created" | "comments" // Sort field
-direction: "asc" | "desc" // Sort direction
+  field: "created" | "comments"     // Sort field
+  direction: "asc" | "desc"         // Sort direction
 }
 \`\`\`
 
@@ -200,18 +189,15 @@ direction: "asc" | "desc" // Sort direction
 The application integrates with the GitHub REST API v3 to fetch repository issues. No backend server is required as all API calls are made directly from the frontend.
 
 #### API Endpoint Used
-
 \`\`\`
 GET https://api.github.com/repos/{owner}/{repo}/issues
 \`\`\`
 
 #### Query Parameters
-
 - `state=all`: Fetch both open and closed issues
 - `per_page=100`: Maximum issues per request (GitHub limit)
 
 #### Authentication
-
 - **Public Repositories**: No authentication required
 - **Rate Limiting**: GitHub allows 60 requests per hour for unauthenticated requests
 - **Private Repositories**: Not supported (would require OAuth token)
@@ -219,24 +205,23 @@ GET https://api.github.com/repos/{owner}/{repo}/issues
 ### API Response Handling
 
 #### Success Response Processing
-
 \`\`\`typescript
 const fetchIssues = async (repo: string) => {
-// 1. Validate repository format
-if (!repo || !repo.includes("/")) {
-setError("Please enter a valid repository in the format: owner/repo")
-return
-}
+  // 1. Validate repository format
+  if (!repo || !repo.includes("/")) {
+    setError("Please enter a valid repository in the format: owner/repo")
+    return
+  }
 
-// 2. Set loading state
-setLoading(true)
-setError(null)
+  // 2. Set loading state
+  setLoading(true)
+  setError(null)
 
-try {
-// 3. Make API request
-const response = await fetch(
-`https://api.github.com/repos/${repo}/issues?state=all&per_page=100`
-)
+  try {
+    // 3. Make API request
+    const response = await fetch(
+      `https://api.github.com/repos/${repo}/issues?state=all&per_page=100`
+    )
 
     // 4. Handle HTTP errors
     if (!response.ok) {
@@ -254,19 +239,17 @@ const response = await fetch(
 
     // 7. Update state
     setIssues(issuesOnly)
-
-} catch (err) {
-// 8. Handle errors
-setError(err instanceof Error ? err.message : "An error occurred...")
-} finally {
-// 9. Clear loading state
-setLoading(false)
-}
+  } catch (err) {
+    // 8. Handle errors
+    setError(err instanceof Error ? err.message : "An error occurred...")
+  } finally {
+    // 9. Clear loading state
+    setLoading(false)
+  }
 }
 \`\`\`
 
 #### Error Handling Strategy
-
 - **Network Errors**: Generic error message for network failures
 - **404 Errors**: Specific message for repository not found
 - **Rate Limiting**: Could be enhanced to detect 403 rate limit responses
@@ -275,61 +258,59 @@ setLoading(false)
 ### Data Transformation
 
 #### Issue Filtering Logic
-
 \`\`\`typescript
 // Filter by state (open/closed/all)
 if (filters.state !== "all") {
-filtered = filtered.filter((issue) => issue.state === filters.state)
+  filtered = filtered.filter((issue) => issue.state === filters.state)
 }
 
 // Filter by labels (OR logic - any matching label)
 if (filters.labels.length > 0) {
-filtered = filtered.filter((issue) =>
-filters.labels.some((filterLabel) =>
-issue.labels.some((issueLabel) => issueLabel.name === filterLabel)
-)
-)
+  filtered = filtered.filter((issue) =>
+    filters.labels.some((filterLabel) => 
+      issue.labels.some((issueLabel) => issueLabel.name === filterLabel)
+    )
+  )
 }
 
 // Filter by assignee (partial string matching)
 if (filters.assignee) {
-filtered = filtered.filter((issue) =>
-issue.assignee?.login.toLowerCase().includes(filters.assignee.toLowerCase())
-)
+  filtered = filtered.filter((issue) =>
+    issue.assignee?.login.toLowerCase().includes(filters.assignee.toLowerCase())
+  )
 }
 
 // Filter by keyword (title and creator username)
 if (filters.keyword) {
-const keyword = filters.keyword.toLowerCase()
-filtered = filtered.filter((issue) =>
-issue.title.toLowerCase().includes(keyword) ||
-issue.user.login.toLowerCase().includes(keyword)
-)
+  const keyword = filters.keyword.toLowerCase()
+  filtered = filtered.filter((issue) => 
+    issue.title.toLowerCase().includes(keyword) || 
+    issue.user.login.toLowerCase().includes(keyword)
+  )
 }
 \`\`\`
 
 #### Sorting Implementation
-
 \`\`\`typescript
 filtered.sort((a, b) => {
-let aValue: number
-let bValue: number
+  let aValue: number
+  let bValue: number
 
-// Determine sort values based on field
-if (sort.field === "created") {
-aValue = new Date(a.created_at).getTime()
-bValue = new Date(b.created_at).getTime()
-} else {
-aValue = a.comments
-bValue = b.comments
-}
+  // Determine sort values based on field
+  if (sort.field === "created") {
+    aValue = new Date(a.created_at).getTime()
+    bValue = new Date(b.created_at).getTime()
+  } else {
+    aValue = a.comments
+    bValue = b.comments
+  }
 
-// Apply sort direction
-if (sort.direction === "asc") {
-return aValue - bValue
-} else {
-return bValue - aValue
-}
+  // Apply sort direction
+  if (sort.direction === "asc") {
+    return aValue - bValue
+  } else {
+    return bValue - aValue
+  }
 })
 \`\`\`
 
@@ -340,7 +321,6 @@ return bValue - aValue
 ### GitHub REST API v3
 
 #### Base URL
-
 \`\`\`
 https://api.github.com
 \`\`\`
@@ -348,18 +328,16 @@ https://api.github.com
 #### Endpoints Used
 
 ##### Get Repository Issues
-
 \`\`\`http
 GET /repos/{owner}/{repo}/issues
 \`\`\`
 
 **Parameters:**
-
 - `owner` (string, required): Repository owner username
 - `repo` (string, required): Repository name
 - `state` (string, optional): Issue state filter
   - `open` - Only open issues
-  - `closed` - Only closed issues
+  - `closed` - Only closed issues  
   - `all` - Both open and closed (default)
 - `per_page` (integer, optional): Results per page (1-100, default 30)
 - `page` (integer, optional): Page number (default 1)
@@ -367,41 +345,39 @@ GET /repos/{owner}/{repo}/issues
 **Response Schema:**
 \`\`\`json
 [
-{
-"id": 1,
-"number": 1347,
-"title": "Found a bug",
-"state": "open",
-"labels": [
-{
-"id": 208045946,
-"name": "bug",
-"color": "d73a4a"
-}
-],
-"assignee": {
-"login": "octocat",
-"avatar_url": "https://github.com/images/error/octocat_happy.gif"
-},
-"created_at": "2011-04-22T13:33:48Z",
-"comments": 0,
-"html_url": "https://github.com/octocat/Hello-World/issues/1347",
-"user": {
-"login": "octocat",
-"avatar_url": "https://github.com/images/error/octocat_happy.gif"
-},
-"pull_request": null
-}
+  {
+    "id": 1,
+    "number": 1347,
+    "title": "Found a bug",
+    "state": "open",
+    "labels": [
+      {
+        "id": 208045946,
+        "name": "bug",
+        "color": "d73a4a"
+      }
+    ],
+    "assignee": {
+      "login": "octocat",
+      "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+    },
+    "created_at": "2011-04-22T13:33:48Z",
+    "comments": 0,
+    "html_url": "https://github.com/octocat/Hello-World/issues/1347",
+    "user": {
+      "login": "octocat",
+      "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+    },
+    "pull_request": null
+  }
 ]
 \`\`\`
 
 **Rate Limits:**
-
 - **Unauthenticated**: 60 requests per hour per IP
 - **Authenticated**: 5,000 requests per hour per user
 
 **Error Responses:**
-
 - `404 Not Found`: Repository doesn't exist or is private
 - `403 Forbidden`: Rate limit exceeded
 - `422 Unprocessable Entity`: Invalid parameters
@@ -409,24 +385,20 @@ GET /repos/{owner}/{repo}/issues
 ### Frontend API Functions
 
 #### fetchIssues(repo: string)
-
 **Purpose**: Fetch all issues for a given repository
 
 **Parameters:**
-
 - `repo` (string): Repository in format "owner/repo"
 
 **Returns**: Promise<void>
 
 **Side Effects:**
-
 - Updates `issues` state with fetched data
 - Updates `loading` state during request
 - Updates `error` state if request fails
 - Filters out pull requests from response
 
 **Error Handling:**
-
 - Validates repository format
 - Handles 404 responses with specific message
 - Catches network and parsing errors
@@ -445,20 +417,18 @@ GET /repos/{owner}/{repo}/issues
 **Props:**
 \`\`\`typescript
 interface RepoSearchProps {
-onSearch: (repo: string) => void // Callback when search is triggered
-loading: boolean // Loading state from parent
+  onSearch: (repo: string) => void  // Callback when search is triggered
+  loading: boolean                  // Loading state from parent
 }
 \`\`\`
 
 **Features:**
-
 - Form validation for repository format
 - Example repository buttons for quick testing
 - Loading state handling
 - Keyboard submission support
 
 **Key Functions:**
-
 - `handleSubmit()`: Validates and triggers search
 - `handleExampleClick()`: Sets example repo and triggers search
 
@@ -471,12 +441,11 @@ loading: boolean // Loading state from parent
 **Props:**
 \`\`\`typescript
 interface IssueCardProps {
-issue: Issue // Complete issue object from GitHub API
+  issue: Issue  // Complete issue object from GitHub API
 }
 \`\`\`
 
 **Features:**
-
 - Status indicators (open/closed with icons)
 - Label display with original GitHub colors
 - Assignee avatar and username
@@ -486,7 +455,6 @@ issue: Issue // Complete issue object from GitHub API
 - Responsive design
 
 **Key Functions:**
-
 - `formatDate()`: Converts ISO date to readable format
 - `getContrastColor()`: Calculates text color for label backgrounds
 
@@ -499,17 +467,16 @@ issue: Issue // Complete issue object from GitHub API
 **Props:**
 \`\`\`typescript
 interface FiltersProps {
-filters: FilterState // Current filter state
-onFiltersChange: (filters: FilterState) => void // Filter update callback
-sort: SortState // Current sort state
-onSortChange: (sort: SortState) => void // Sort update callback
-availableLabels: string[] // Labels from current issues
-availableAssignees: string[] // Assignees from current issues
+  filters: FilterState              // Current filter state
+  onFiltersChange: (filters: FilterState) => void  // Filter update callback
+  sort: SortState                   // Current sort state
+  onSortChange: (sort: SortState) => void          // Sort update callback
+  availableLabels: string[]         // Labels from current issues
+  availableAssignees: string[]      // Assignees from current issues
 }
 \`\`\`
 
 **Features:**
-
 - State filter (all/open/closed)
 - Multi-select label filtering
 - Assignee dropdown with search
@@ -524,7 +491,6 @@ availableAssignees: string[] // Assignees from current issues
 **Purpose**: Animated loading spinner
 
 **Features:**
-
 - CSS animation for smooth rotation
 - Consistent styling with design system
 - Accessible loading indicator
@@ -534,37 +500,29 @@ availableAssignees: string[] // Assignees from current issues
 ## 🚀 Installation & Setup
 
 ### Prerequisites
-
-- Node.js 18+
+- Node.js 18+ 
 - npm or yarn package manager
 
 ### Development Setup
 
 1. **Clone/Download the project**
    \`\`\`bash
-
    # If using GitHub integration
-
    git clone <repository-url>
    cd github-issue-board
-
    \`\`\`
 
 2. **Install dependencies**
    \`\`\`bash
    npm install
-
    # or
-
    yarn install
    \`\`\`
 
 3. **Run development server**
    \`\`\`bash
    npm run dev
-
    # or
-
    yarn dev
    \`\`\`
 
@@ -576,18 +534,14 @@ availableAssignees: string[] // Assignees from current issues
 ### Production Build
 
 \`\`\`bash
-
 # Build for production
-
 npm run build
 
 # Start production server
-
 npm start
 \`\`\`
 
 ### Deployment
-
 1. Build the project: `npm run build`
 2. Deploy the `.next` folder to your hosting provider
 3. Ensure Node.js runtime is available
@@ -597,9 +551,7 @@ npm start
 No environment variables are required for basic functionality. Optional configurations:
 
 \`\`\`env
-
 # Optional: GitHub Personal Access Token for higher rate limits
-
 GITHUB_TOKEN=your_token_here
 \`\`\`
 
@@ -618,20 +570,17 @@ GITHUB_TOKEN=your_token_here
 ### Adding New Features
 
 #### Adding New Filters
-
 1. Update `FilterState` interface in `app/page.tsx`
 2. Add filter logic in the `useEffect` that processes `filteredIssues`
 3. Update `Filters` component to include new filter UI
 4. Test with various repositories
 
 #### Adding New Sort Options
-
 1. Update `SortState` interface
 2. Add sort logic in the filtering `useEffect`
 3. Update sort dropdown in `Filters` component
 
 #### Enhancing Issue Display
-
 1. Modify `Issue` interface if new GitHub API fields needed
 2. Update `IssueCard` component to display new information
 3. Ensure responsive design is maintained
@@ -639,13 +588,11 @@ GITHUB_TOKEN=your_token_here
 ### Performance Considerations
 
 #### Current Optimizations
-
 - Efficient filtering with proper dependency arrays
 - Memoized sort operations
 - Minimal re-renders with focused state updates
 
 #### Potential Improvements
-
 - Implement virtual scrolling for large issue lists
 - Add debouncing for search inputs
 - Cache API responses with localStorage
@@ -654,14 +601,12 @@ GITHUB_TOKEN=your_token_here
 ### Accessibility Features
 
 #### Current Implementation
-
 - Semantic HTML structure
 - ARIA labels for interactive elements
 - Keyboard navigation support
 - Screen reader friendly content
 
 #### Enhancement Opportunities
-
 - Add skip navigation links
 - Implement focus management
 - Add keyboard shortcuts
@@ -672,27 +617,23 @@ GITHUB_TOKEN=your_token_here
 ## 📊 Technical Specifications
 
 ### Browser Support
-
 - Chrome 90+
 - Firefox 88+
 - Safari 14+
 - Edge 90+
 
 ### Performance Metrics
-
 - **First Contentful Paint**: <1.5s
 - **Largest Contentful Paint**: <2.5s
 - **Cumulative Layout Shift**: <0.1
 - **First Input Delay**: <100ms
 
 ### Bundle Size
-
 - **JavaScript**: ~150KB gzipped
 - **CSS**: ~20KB gzipped
 - **Total**: ~170KB gzipped
 
 ### API Limitations
-
 - **Rate Limit**: 60 requests/hour (unauthenticated)
 - **Issue Limit**: 100 issues per repository
 - **Repository Access**: Public repositories only
@@ -704,22 +645,18 @@ GITHUB_TOKEN=your_token_here
 ### Common Issues
 
 #### "Repository not found" Error
-
 - **Cause**: Repository doesn't exist or is private
 - **Solution**: Verify repository name and ensure it's public
 
 #### Rate Limit Exceeded
-
 - **Cause**: Too many API requests (60/hour limit)
 - **Solution**: Wait for rate limit reset or add GitHub token
 
 #### No Issues Displayed
-
 - **Cause**: Repository has no issues or all filtered out
 - **Solution**: Check filters or try different repository
 
 #### Loading Never Completes
-
 - **Cause**: Network issues or API downtime
 - **Solution**: Check internet connection and GitHub status
 
@@ -755,5 +692,150 @@ This project is open source and available under the MIT License.
 - **Vercel**: For seamless deployment platform
 
 ---
+🔄 User Flow
+1. Landing Page
 
-_Last updated: December 2024_
+Purpose: Introduce the project and explain “what this board is about.”
+
+User actions:
+
+Browse available repositories/projects.
+
+Click into a project to see its issues.
+
+Filter issues by difficulty/labels (like good first issue).
+
+2. Project Selection Page
+
+Shows: A list of repositories you curate (maybe hand-picked ones good for beginners).
+
+User actions:
+
+Click a repo → go to its issue board.
+
+3. Issue Board (Core Page)
+
+Shows: Issues from a repo (or multiple repos in one place).
+
+Filters:
+
+Labels (e.g., good first issue, help wanted).
+
+Open/closed status.
+
+User actions:
+
+Click an issue → see details.
+
+Copy link to issue.
+
+Maybe see related resources (repo README, contribution guidelines).
+
+4. Issue Detail Page
+
+Shows:
+
+Title, body (markdown rendered).
+
+Labels, assignees, comments.
+
+Link to GitHub issue page (to take action).
+
+User actions:
+
+Read full context.
+
+Click “Go to GitHub” if they want to actually comment/claim/fix (since no login on your site).
+
+5. Extras (Optional but Nice)
+
+“How to contribute” section (general OSS onboarding guide).
+
+“Recently solved” or “Hot issues” feed.
+
+Search box across all repos.
+
+⚙️ Features → GitHub API Calls
+
+Since no login, you’ll be using unauthenticated requests → limited rate (60 req/hour per IP).
+For production, you should use a server-side token (with public_repo scope only) to increase to 5000 req/hour. Users still don’t log in.
+
+1. List curated repositories
+
+API Call:
+
+GET /repos/{owner}/{repo}
+
+
+Gives metadata (stars, description, language).
+
+You can maintain a list of repos (in a JSON file or DB) and fetch their info.
+
+2. List issues in a repo
+
+API Call:
+
+GET /repos/{owner}/{repo}/issues
+
+
+Query params:
+
+state=open
+
+labels=good first issue,help wanted (comma-separated)
+
+per_page=20&page=1
+
+Returns issues (title, body, labels, assignee, etc.)
+
+3. Get single issue (detail page)
+
+API Call:
+
+GET /repos/{owner}/{repo}/issues/{issue_number}
+
+4. Get issue comments
+
+API Call:
+
+GET /repos/{owner}/{repo}/issues/{issue_number}/comments
+
+5. Repo contribution guidelines / README (optional extras)
+
+API Call:
+
+GET /repos/{owner}/{repo}/contents/README.md
+GET /repos/{owner}/{repo}/community/code_of_conduct
+GET /repos/{owner}/{repo}/community/contributing
+
+
+(not every repo has contributing guide, so fallback to README).
+
+Endpoint / Action	HTTP Method	Path Parameters / Query Params	Purpose / What it Returns	Permissions / Notes
+Get repository metadata	GET	/repos/{owner}/{repo}	Info about the repo: description, stars, forks, visibility, default branch, etc.	
+List organization’s repos	GET	/orgs/{org}/repos, query params like type, sort etc. 
+GitHub Docs
+	Get all (or type filtered) repos under an organization.	
+List user’s repos	GET	/users/{username}/repos / for authenticated user /user/repos	List public repos for a user, or private + public if you have enough permissions.	
+Repository contents	GET	/repos/{owner}/{repo}/contents/{path}	Read a file or directory contents (returns base64 encoded for files) or list directory. 
+GitHub Docs
+	
+Create / update file	PUT	same as above, with request body containing content (base64), commit message etc.	Modify repo content. Requires write permissions. 
+GitHub Docs
+	
+Delete file	DELETE	/repos/{owner}/{repo}/contents/{path}	Delete a file through the API (with commit message & sha). Permissions needed. 
+GitHub Docs
+	
+Repo statistics / graphs	GET	endpoints under /repos/{owner}/{repo}/stats/...	e.g. contributors, traffic, clones, etc. Some stats may be delayed / return 202 if data not ready. 
+GitHub Docs
+	
+Deployments	GET, POST, DELETE	/repos/{owner}/{repo}/deployments etc.	Manage deployment triggers, statuses etc. Useful for CI/CD. 
+GitHub Docs
+	
+Environments	GET	/repos/{owner}/{repo}/environments	List or get environment settings for deployments. 
+GitHub Docs
+	
+Custom repository properties	GET, etc.	/repos/{owner}/{repo}/properties/...	Some repos/orgs set custom metadata / properties. 
+GitHub Docs
+	
+Rulesets / branch/tag protection rules	GET / PATCH etc.	/repos/{owner}/{repo}/rulesets or /repos/{owner}/{repo}/rules	Manage rules controlling branch behavior, tag protection etc.
