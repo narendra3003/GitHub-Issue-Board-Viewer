@@ -52,6 +52,7 @@ export default function GitHubIssueBoardViewer() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentRepo, setCurrentRepo] = useState<string>("")
+  const [totalIssues, setTotalIssues] = useState<number | null>(null)
 
   const [filters, setFilters] = useState<FilterState>({
     state: "all",
@@ -67,73 +68,79 @@ export default function GitHubIssueBoardViewer() {
 
   // Pagination states
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [perPage, setPerPage] = useState(30) // Default perPage value
+  const [totalPages, setTotalPages] = useState<number>(1)
 
   // Fetch issues from GitHub API with pagination
-  // Fetch issues from GitHub API with pagination
-const fetchIssues = async (
-  repo: string,
-  pageNum: number = 1,
-  perPageNum: number = perPage
-) => {
-  if (!repo || !repo.includes("/")) {
-    setError("Please enter a valid repository in the format: owner/repo");
-    return;
-  }
-
-  setLoading(true);
-  setError(null);
-  setCurrentRepo(repo);
-
-  try {
-    const response = await fetch(
-      `https://api.github.com/repos/${repo}/issues?state=all&per_page=${perPageNum}&page=${pageNum}`
-    );
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(
-          "Repository not found. Please check the repository name and make sure it's public."
-        );
-      }
-      throw new Error(`Failed to fetch issues: ${response.statusText}`);
+  const fetchTotalIssues = async (repo: string) => {
+    if (!repo || !repo.includes("/")) return;
+    try {
+      const response = await fetch(`https://api.github.com/repos/${repo}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      // open_issues_count includes PRs, so we need to estimate or just use as is
+      setTotalIssues(data.open_issues_count || 0);
+    } catch {
+      setTotalIssues(null);
     }
+  };
+
+  const fetchIssues = async (
+    repo: string,
+    pageNum: number = 1,
+    perPageNum: number = perPage
+  ) => {
+    if (!repo || !repo.includes("/")) {
+      setError("Please enter a valid repository in the format: owner/repo");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setCurrentRepo(repo);
+
+    // Fetch total issues count when repo changes or on first fetch
+    if (pageNum === 1 && perPageNum === perPage) {
+      fetchTotalIssues(repo);
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${repo}/issues?state=all&per_page=${perPageNum}&page=${pageNum}`
+      );
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(
+            "Repository not found. Please check the repository name and make sure it's public."
+          );
+        }
+        throw new Error(`Failed to fetch issues: ${response.statusText}`);
+      }
 
     const data = await response.json();
-    const issuesOnly = data.filter((issue: any) => !issue.pull_request);
+    // const issuesOnly = data.filter((issue: any) => !issue.pull_request);
+    const issuesOnly = data;
 
-    setIssues(issuesOnly);
-    setPage(pageNum);
-    setPerPage(perPageNum);
+      setIssues(issuesOnly);
+      setPage(pageNum);
+      setPerPage(perPageNum);
 
-    // ✅ Parse total pages from Link header
-    const linkHeader = response.headers.get("Link");
-    if (linkHeader) {
-      const lastPageMatch = linkHeader.match(/&page=(\d+)>; rel="last"/);
-      if (lastPageMatch) {
-        setTotalPages(Number(lastPageMatch[1]));
-      } else {
-        // If no "last" link, maybe it's only one page
-        const nextPageMatch = linkHeader.match(/&page=(\d+)>; rel="next"/);
-        setTotalPages(nextPageMatch ? Number(nextPageMatch[1]) : 1);
+      // If no issues returned, show page out of bounds error
+      if (Array.isArray(issuesOnly) && issuesOnly.length === 0) {
+        setError("Page out of bounds or no issues found on this page.");
       }
-    } else {
-      // If repo has fewer than perPage issues → only 1 page
-      setTotalPages(1);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching issues"
+      );
+      setIssues([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError(
-      err instanceof Error
-        ? err.message
-        : "An error occurred while fetching issues"
-    );
-    setIssues([]);
-    setTotalPages(1);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Apply filters and sorting
   useEffect(() => {
@@ -189,6 +196,15 @@ const fetchIssues = async (
     setFilteredIssues(filtered)
   }, [issues, filters, sort])
 
+  // Update totalPages whenever totalIssues or perPage changes
+  useEffect(() => {
+    if (totalIssues !== null && perPage > 0) {
+      setTotalPages(Math.ceil(totalIssues / perPage));
+    } else {
+      setTotalPages(1);
+    }
+  }, [totalIssues, perPage]);
+
   // Get unique labels for filter options
   const availableLabels = Array.from(
     new Set(issues.flatMap((issue) => issue.labels.map((label) => label.name))),
@@ -230,47 +246,45 @@ const fetchIssues = async (
         {/* Per Page and Page Controls */}
         <div className="mb-4 flex gap-4 items-center">
           {/* Per Page Selector */}
-<label>
-  Per Page:
-  <select
-    className="ml-2 px-2 py-1 border rounded bg-black text-white"
-    value={perPage}
-    onChange={(e) => {
-      const newPerPage = Number(e.target.value);
-      fetchIssues(currentRepo, 1, newPerPage); // reset to page 1
-    }}
-    disabled={loading}
-  >
-    {[10, 20, 30, 50, 100].map((n) => (
-      <option key={n} value={n}>
-        {n}
-      </option>
-    ))}
-  </select>
-</label>
+          <label>
+            Per Page:
+            <select
+              className="ml-2 px-2 py-1 border rounded bg-black text-white"
+              value={perPage}
+              onChange={(e) => {
+                const newPerPage = Number(e.target.value);
+                fetchIssues(currentRepo, 1, newPerPage); // reset to page 1
+              }}
+              disabled={loading}
+            >
+              {[10, 20, 30, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
 
-{/* Page Input */}
-<label>
-  Page:
-  <input
-    type="number"
-    min={1}
-    max={totalPages}
-    className="ml-2 px-2 py-1 border rounded w-16"
-    value={page}
-    onChange={(e) => {
-      const newPage = Number(e.target.value);
-      if (newPage >= 1 && newPage <= totalPages) {
-        fetchIssues(currentRepo, newPage, perPage);
-      }
-    }}
-    disabled={loading || totalPages < 2}
-  />
-</label>
-
+          {/* Page Input */}
+          <label>
+            Page:
+            <input
+              type="number"
+              min={1}
+              className="ml-2 px-2 py-1 border rounded w-16"
+              value={page}
+              onChange={(e) => {
+                const newPage = Number(e.target.value);
+                if (newPage >= 1) {
+                  fetchIssues(currentRepo, newPage, perPage);
+                }
+              }}
+              disabled={loading}
+            />
+          </label>
         </div>
         {/* Main Content */}
-        {!loading && issues.length > 0 && (
+        {!loading && issues.length > 0 && !error && (
           <>
             {/* Repository Info */}
             <div className="mb-6">
@@ -278,7 +292,9 @@ const fetchIssues = async (
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground">{currentRepo}</h2>
-                    <p className="text-muted-foreground">{issues.length} issues found</p>
+                    <p className="text-muted-foreground">
+                      {totalIssues !== null ? `${totalIssues} total issues` : `${issues.length} issues found`}
+                    </p>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Showing {filteredIssues.length} of {issues.length} issues
@@ -302,7 +318,7 @@ const fetchIssues = async (
               <button
                 className="px-4 py-2 bg-muted-foreground text-white rounded disabled:opacity-50"
                 onClick={() => fetchIssues(currentRepo, page + 1)}
-                disabled={page >= totalPages || loading}
+                disabled={loading || page >= totalPages}
               >
                 Next
               </button>
