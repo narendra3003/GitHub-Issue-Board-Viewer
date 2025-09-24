@@ -63,8 +63,10 @@ interface SortState {
 
 export default function RepositoryIssuePage() {
   const params = useParams()
+  console.log("Params:", params)
   const owner = params.owner as string
   const repo = params.repo as string
+  console.log("Owner:", owner, "Repo:", repo)
 
   const [repository, setRepository] = useState<Repository | null>(null)
   const [issues, setIssues] = useState<Issue[]>([])
@@ -90,7 +92,14 @@ export default function RepositoryIssuePage() {
 
   const fetchRepository = async () => {
     try {
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`)
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`,{
+        headers: {
+      Authorization: process.env.VITE_GITHUB_TOKEN
+        ? `Bearer ${process.env.VITE_GITHUB_TOKEN}`
+        : "",
+      Accept: "application/vnd.github.v3+json",
+    },
+      });
       if (!response.ok) {
         throw new Error("Repository not found")
       }
@@ -116,7 +125,14 @@ export default function RepositoryIssuePage() {
     try {
       const response = await fetch(
         `https://api.github.com/repos/${owner}/${repo}/issues?state=all&per_page=100&page=${page}&sort=created&direction=desc`,
-      )
+      {
+        headers: {
+      Authorization: process.env.VITE_GITHUB_TOKEN
+        ? `Bearer ${process.env.VITE_GITHUB_TOKEN}`
+        : "",
+      Accept: "application/vnd.github.v3+json",
+    },
+      });
 
       if (!response.ok) {
         if (response.status === 404) {

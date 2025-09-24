@@ -81,7 +81,14 @@ export default function IssueDetailPage() {
   const fetchIssue = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`)
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`,{
+        headers: {
+      Authorization: process.env.VITE_GITHUB_TOKEN
+        ? `Bearer ${process.env.VITE_GITHUB_TOKEN}`
+        : "",
+      Accept: "application/vnd.github.v3+json",
+    },
+      });
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -104,7 +111,14 @@ export default function IssueDetailPage() {
 
     try {
       setCommentsLoading(true)
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`)
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,{
+        headers: {
+      Authorization: process.env.VITE_GITHUB_TOKEN
+        ? `Bearer ${process.env.VITE_GITHUB_TOKEN}`
+        : "",
+      Accept: "application/vnd.github.v3+json",
+    },
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch comments: ${response.statusText}`)
